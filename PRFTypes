@@ -1,114 +1,67 @@
 -----------------------------------------------------------------
 //Just the plain center X PRF
 -----------------------------------------------------------------
+double stepx = .5;
 vector<double> y0;
 vector<double> x0;
-for (int i = 10; i > -11; --i)
+int interest = int(perrow/2)+1; //This finds the central pad in the first row
+
+// beginning at the end of the x-events, going to 0, and back to the end
+// Looping over all events (except 0) twice is just exploiting symmetry
+for (int i = 1-xevents; i<xevents; ++i)
 {
-	y0.push_back(maxima[abs(i)][2]/maxima[abs(i)][maxima[abs(i)].size()-1]);
-	x0.push_back(i);
+	y0.push_back(maxima[abs(i)][interest-1]/(maxima[abs(i)][maxima[abs(i)].size()-1])); 
+	x0.push_back(i*stepx);
 }
+Normalize(y0);
 TCanvas * c1 = new TCanvas();
 TGraph *PRFx = new TGraph(y0.size(),&x0[0],&y0[0]);
 PRFx->Draw("AC*");
-PRFx->SetTitle("PRF as a function of X-motion");
+sprintf(buffer,"PRF as a function of X-motion (Pad %i)",interest);
+PRFx->SetTitle(buffer);
+PRFx->GetXaxis()->SetTitle("Steps in mm from relative 0");
+PRFx->GetYaxis()->SetTitle("Amplitude");
 -----------------------------------------------------------------
-//To Get X and Y PRFs
+// The three center pads, overlapped to account for relative position
 -----------------------------------------------------------------
-vector<double> y0;
-vector<double> x0;
-vector<double> y1;
-vector<double> x1;
-for (int i = 10; i > -11; --i)
+double stepx = .5;
+int padwidth = 2;
+vector<double> x3,x4,x5;
+vector<double> Pad3,Pad4,Pad5;
+int interest = int(perrow/2)+1; //This finds the central pad in the first row
+for (int i = 1-xevents; i<xevents; ++i)
 {
-	y0.push_back(maxima[abs(i)][2]/maxima[abs(i)][maxima[abs(i)].size()-1]);
-	x0.push_back(i);
-}
-for (int i = 3; i > -4; --i)
-{
-	y1.push_back(maxima[abs(11*i)][2]/maxima[abs(11*i)][maxima[abs(11*i)].size()-1]);
-	x1.push_back(i);
-}
-TCanvas * c1 = new TCanvas();
-c1->Divide(2,1);
-TGraph *PRFy = new TGraph(y1.size(),&x1[0],&y1[0]);
-TGraph *PRFx = new TGraph(y0.size(),&x0[0],&y0[0]);
-c1->cd(1);
-PRFx->Draw("AC*");
-PRFx->SetTitle("PRF as a function of X-motion");
-c1->cd(2);
-PRFy->Draw("AC*");
-PRFy->SetTitle("PRF as a function of Y-motion");
------------------------------------------------------------------
-//To get X PRFs for pads 2,3,4.
------------------------------------------------------------------
-vector<double> x0;
-vector<double> Pad2;
-vector<double> Pad3;
-vector<double> Pad4;
-for (int i = -10; i < 11; ++i)
-{
-	x0.push_back(i);
-	Pad3.push_back((maxima[abs(i)][2])/(maxima[abs(i)][maxima[abs(i)].size()-1]));
+	x4.push_back(i*stepx);
+	x3.push_back(i*stepx+padwidth);
+	x5.push_back(i*stepx-padwidth);
+	Pad4.push_back((maxima[abs(i)][interest-1])/(maxima[abs(i)][maxima[abs(i)].size()-1]));
 	if(i<=0)
 	{
-		Pad2.push_back((maxima[abs(i)][3])/(maxima[abs(i)][maxima[abs(i)].size()-1]));
-		Pad4.push_back((maxima[abs(i)][1])/(maxima[abs(i)][maxima[abs(i)].size()-1]));
+		Pad3.push_back((maxima[abs(i)][interest])/(maxima[abs(i)][maxima[abs(i)].size()-1]));
+		Pad5.push_back((maxima[abs(i)][interest-2])/(maxima[abs(i)][maxima[abs(i)].size()-1]));
 	}
 	else
 	{
-		Pad2.push_back((maxima[abs(i)][1])/(maxima[abs(i)][maxima[abs(i)].size()-1]));
-		Pad4.push_back((maxima[abs(i)][3])/(maxima[abs(i)][maxima[abs(i)].size()-1]));
+		Pad3.push_back((maxima[abs(i)][interest-2])/(maxima[abs(i)][maxima[abs(i)].size()-1]));
+		Pad5.push_back((maxima[abs(i)][interest])/(maxima[abs(i)][maxima[abs(i)].size()-1]));
 	}
 }
+Normalize(Pad3);
+Normalize(Pad4);
+Normalize(Pad5);
 TCanvas * c1 = new TCanvas();
 TMultiGraph * AllPads = new TMultiGraph();
-TGraph *Pad2g = new TGraph(Pad2.size(),&x0[0],&Pad2[0]);
-Pad2g->SetLineColor(2);
-Pad2g->SetLineWidth(2);
-TGraph *Pad3g = new TGraph(Pad3.size(),&x0[0],&Pad3[0]);
-Pad3g->SetLineColor(1);
+TGraph *Pad3g = new TGraph(Pad3.size(),&x3[0],&Pad3[0]);
+Pad3g->SetLineColor(2);
 Pad3g->SetLineWidth(2);
-TGraph *Pad4g = new TGraph(Pad4.size(),&x0[0],&Pad4[0]);
-Pad4g->SetLineColor(4);
+TGraph *Pad4g = new TGraph(Pad4.size(),&x4[0],&Pad4[0]);
+Pad4g->SetLineColor(1);
 Pad4g->SetLineWidth(2);
-AllPads->Add(Pad2g,"C*");
+TGraph *Pad5g = new TGraph(Pad5.size(),&x5[0],&Pad5[0]);
+Pad5g->SetLineColor(4);
+Pad5g->SetLineWidth(2);
 AllPads->Add(Pad3g,"C*");
 AllPads->Add(Pad4g,"C*");
+AllPads->Add(Pad5g,"C*");
 AllPads->Draw("a");
-AllPads->SetTitle("PRF for Pads 2, 3, and 4");
------------------------------------------------------------------
-//To get the 4 X PRF's, for different y values.
------------------------------------------------------------------
-vector<double> x0;
-vector<double> y0;
-vector<double> y1;
-vector<double> y2;
-vector<double> y3;
-for (int i = 10; i > -11; --i)
-{
-	y0.push_back(maxima[abs(i)][2]/maxima[abs(i)][maxima[abs(i)].size()-1]);
-	y1.push_back(maxima[abs(i)+11][2]/maxima[abs(i)+11][maxima[abs(i)+11].size()-1]);
-	y2.push_back(maxima[abs(i)+22][2]/maxima[abs(i)+22][maxima[abs(i)+22].size()-1]);
-	y3.push_back(maxima[abs(i)+33][2]/maxima[abs(i)+33][maxima[abs(i)+33].size()-1]);
-	x0.push_back(i);
-}
-TCanvas * c1 = new TCanvas();
-c1->Divide(2,2);
-TGraph *PRF0 = new TGraph(y0.size(),&x0[0],&y0[0]);
-TGraph *PRF1 = new TGraph(y1.size(),&x0[0],&y1[0]);
-TGraph *PRF2 = new TGraph(y2.size(),&x0[0],&y2[0]);
-TGraph *PRF3 = new TGraph(y3.size(),&x0[0],&y3[0]);
-c1->cd(1);
-PRF0->Draw("AC*");
-PRF0->SetTitle("PRF as a function of X-motion at y=0");
-c1->cd(2);
-PRF1->Draw("AC*");
-PRF1->SetTitle("PRF as a function of X-motion at y=1");
-c1->cd(3);
-PRF2->Draw("AC*");
-PRF2->SetTitle("PRF as a function of X-motion at y=2");
-c1->cd(4);
-PRF3->Draw("AC*");
-PRF3->SetTitle("PRF as a function of X-motion at y=3");
------------------------------------------------------------------
+AllPads->SetTitle("PRF for Pads 3, 4, and 5");
